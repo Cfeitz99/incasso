@@ -53,3 +53,34 @@ app.post('/receive-payment-url', express.json(), (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+// In-memory storage for the payment URLs
+let paymentUrls = {};
+
+app.post('/receive-payment-url', express.json(), (req, res) => {
+  const { paymentUrl, contactId } = req.body;
+  console.log('Received payment URL:', paymentUrl);
+  
+  // Store the payment URL using the contact ID as a key
+  paymentUrls[contactId] = paymentUrl;
+  
+  res.status(200).json({ success: true });
+});
+
+app.get('/redirect-to-payment', (req, res) => {
+  const contactId = req.query.contact_id; // You would pass this when redirecting the client here
+  
+  // Retrieve the payment URL using the contact ID
+  const paymentUrl = paymentUrls[contactId];
+  
+  if (paymentUrl) {
+    // Clear the payment URL from memory after retrieving it
+    delete paymentUrls[contactId];
+    
+    // Serve a page that redirects the user to the payment URL
+    res.send(`<html><head><meta http-equiv="refresh" content="0;url=${paymentUrl}"></head></html>`);
+  } else {
+    res.status(404).send('Payment URL not found.');
+  }
+});
+
