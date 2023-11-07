@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 app.get('/create-payment', async (req, res) => {
   try {
     // Replace 'YOUR_ZAPIER_WEBHOOK_URL' with the webhook URL provided by Zapier
-    const zapierResponse = await axios.post('YOUR_ZAPIER_WEBHOOK_URL', {});
+    const zapierResponse = await axios.post('https://hooks.zapier.com/hooks/catch/16510018/38cygnn/', {});
 
     // Zapier should respond with the payment URL in the response body
     if (zapierResponse.data && zapierResponse.data.paymentUrl) {
