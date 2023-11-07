@@ -36,7 +36,6 @@ app.post('/receive-payment-url', express.json(), (req, res) => {
 });
 
 
-// Endpoint to create payment and initiate the process
 app.get('/create-payment', async (req, res) => {
   const contactId = req.query.contact_id;
 
@@ -55,22 +54,16 @@ app.get('/create-payment', async (req, res) => {
     const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/16510018/38cygnn/';
 
     // Make a POST request to the Zapier webhook with the contact ID
-    const response = await axios.post(zapierWebhookUrl, { contactId });
+    await axios.post(zapierWebhookUrl, { contactId });
 
-    // Assume the response contains the payment URL
-    if (response.data && response.data.paymentUrl) {
-      // Store the payment URL
-      paymentUrls[contactId] = response.data.paymentUrl;
-      // Redirect to the waiting page
-      res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
-    } else {
-      // Handle case where payment URL is not in response
-      throw new Error('Payment URL not provided by Mollie');
-    }
+    // No need to assume the response contains the payment URL
+    // Redirect to the waiting page and let the polling mechanism check for the URL
+    res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
   } catch (error) {
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
+
 
 
 app.get('/check-payment-url', (req, res) => {
