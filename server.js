@@ -36,6 +36,7 @@ app.post('/receive-payment-url', express.json(), (req, res) => {
 });
 
 
+// Endpoint to create payment and initiate the process
 app.get('/create-payment', async (req, res) => {
   const contactId = req.query.contact_id;
 
@@ -44,23 +45,14 @@ app.get('/create-payment', async (req, res) => {
       throw new Error('No contact ID provided');
     }
 
-    // Check if a payment URL has already been requested for this contactId
-    if (paymentUrls[contactId]) {
-      // If so, just redirect to the waiting page without requesting again
-      console.log(`Payment URL already requested for contactId ${contactId}`);
-      return res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
-    }
-
     const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/16510018/38cygnn/';
 
     // Make a POST request to the Zapier webhook with the contact ID
-    const zapResponse = await axios.post(zapierWebhookUrl, { contactId });
-    console.log(`Zapier webhook called with contactId ${contactId}: response status ${zapResponse.status}`);
+    await axios.post(zapierWebhookUrl, { contactId });
 
-    // Redirect to the waiting page and let the polling mechanism check for the URL
+    // Redirect to a waiting page that will handle the actual redirection to the payment URL
     res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
   } catch (error) {
-    console.error(`Error while calling Zapier webhook for contactId ${contactId}:`, error);
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
