@@ -5,20 +5,23 @@
   <title>Waiting for Payment</title>
   <script>
     // Polling function to check if the payment URL is ready
-    function checkPaymentUrl(contactId) {
-      fetch(`/check-payment-url?contact_id=${contactId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.available) {
-            // If the payment URL is available, redirect the user there
-            window.location.href = data.paymentUrl;
-          } else {
-            // If not available, check again in a few seconds
-            setTimeout(() => checkPaymentUrl(contactId), 3000); // checks every 3 seconds
-          }
-        })
-        .catch(error => console.error('Error checking payment URL:', error));
-    }
+// Polling function to check if the payment URL is ready
+function checkPaymentUrl(contactId) {
+  fetch(`/check-payment-url?contact_id=${contactId}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('Polling response data:', data);  // Add this line to log the data
+      if (data.available) {
+        // If the payment URL is available, redirect the user there
+        window.location.href = data.paymentUrl;
+      } else {
+        // If not available, check again in a few seconds
+        setTimeout(() => checkPaymentUrl(contactId), 3000); // checks every 3 seconds
+      }
+    })
+    .catch(error => console.error('Error checking payment URL:', error));
+}
+
 
     // Start the polling process
     document.addEventListener('DOMContentLoaded', (event) => {
