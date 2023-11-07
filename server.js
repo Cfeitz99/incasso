@@ -24,7 +24,7 @@ app.post('/receive-payment-url', express.json(), (req, res) => {
   res.status(200).json({ success: true });
 });
 
-// Endpoint to create payment and redirect user
+// Endpoint to create payment and initiate the process
 app.get('/create-payment', async (req, res) => {
   const contactId = req.query.contact_id;
 
@@ -39,13 +39,13 @@ app.get('/create-payment', async (req, res) => {
     await axios.post(zapierWebhookUrl, { contactId });
 
     // Redirect to a waiting page that will handle the actual redirection to the payment URL
-    res.redirect(`/redirect-to-payment?contact_id=${contactId}`);
+    res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
   } catch (error) {
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
 
-// Endpoint to check if the payment URL is available
+// Endpoint for the frontend to poll for the payment URL availability
 app.get('/check-payment-url', (req, res) => {
   const contactId = req.query.contact_id;
   
@@ -63,37 +63,14 @@ app.get('/check-payment-url', (req, res) => {
 app.get('/redirect-to-payment', (req, res) => {
   const contactId = req.query.contact_id;
   
-  // Serve a page that polls for the payment URL
-  res.send(`
-    <html>
-    <head>
-      <title>Waiting for Payment...</title>
-      <script>
-        function checkPaymentUrl(contactId) {
-          fetch(\`/check-payment-url?contact_id=\${contactId}\`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.available) {
-                window.location.href = data.paymentUrl;
-              } else {
-                // Not available yet, check again in a few seconds
-                setTimeout(() => checkPaymentUrl(contactId), 3000);
-              }
-            })
-            .catch(error => {
-              console.error('Error checking payment URL:', error);
-            });
-        }
-        // Start polling for the payment URL
-        checkPaymentUrl('${contactId}');
-      </script>
-    </head>
-    <body>
-      <h1>Payment Processing...</h1>
-      <p>Please wait, you will be redirected shortly.</p>
-    </body>
-    </html>
-  `);
+  const paymentUrl = paymentUrls[contactId];
+  
+  if (paymentUrl) {
+    delete paymentUrls[contactId];
+    res.redirect(paymentUrl);
+  } else {
+    res.status(404).send('Payment URL not found.');
+  }
 });
 
 app.listen(port, () => {
