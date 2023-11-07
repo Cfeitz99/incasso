@@ -5,9 +5,14 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Serve the static HTML file
+// Serve the static HTML file for the homepage
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Serve the static HTML file for the waiting page
+app.get('/waiting-for-payment', (req, res) => {
+  res.sendFile(path.join(__dirname, 'waiting-for-payment.html'));
 });
 
 // In-memory storage for the payment URLs
@@ -56,20 +61,6 @@ app.get('/check-payment-url', (req, res) => {
     res.json({ available: true, paymentUrl: paymentUrl });
   } else {
     res.json({ available: false });
-  }
-});
-
-// Endpoint to redirect user to the actual payment URL
-app.get('/redirect-to-payment', (req, res) => {
-  const contactId = req.query.contact_id;
-  
-  const paymentUrl = paymentUrls[contactId];
-  
-  if (paymentUrl) {
-    delete paymentUrls[contactId];
-    res.redirect(paymentUrl);
-  } else {
-    res.status(404).send('Payment URL not found.');
   }
 });
 
