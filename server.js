@@ -22,7 +22,7 @@ app.get('/create-payment', async (req, res) => {
     }
 
     // Insert the actual Zapier webhook URL here
-    const zapierWebhookUrl = 'YOUR_ZAPIER_WEBHOOK_URL';
+    const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/16510018/38cygnn/';
 
     // Make a POST request to the Zapier webhook with the contact ID
     const zapierResponse = await axios.post(zapierWebhookUrl, { contactId });
