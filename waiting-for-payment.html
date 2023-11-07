@@ -23,14 +23,16 @@ function checkPaymentUrl(contactId) {
 }
 
 
-    // Start the polling process
-    document.addEventListener('DOMContentLoaded', (event) => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const contactId = urlParams.get('contact_id');
-      if (contactId) {
-        checkPaymentUrl(contactId);
-      }
-    });
+// In waiting-for-payment.html
+document.addEventListener('DOMContentLoaded', (event) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const contactId = urlParams.get('contact_id');
+  if (contactId) {
+    // Start polling after a delay
+    setTimeout(() => checkPaymentUrl(contactId), 5000); // 5-second delay before polling
+  }
+});
+
   </script>
 </head>
 <body>
