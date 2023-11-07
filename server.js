@@ -54,15 +54,17 @@ app.get('/create-payment', async (req, res) => {
     const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/16510018/38cygnn/';
 
     // Make a POST request to the Zapier webhook with the contact ID
-    await axios.post(zapierWebhookUrl, { contactId });
+    const zapResponse = await axios.post(zapierWebhookUrl, { contactId });
+    console.log(`Zapier webhook called with contactId ${contactId}: response status ${zapResponse.status}`);
 
-    // No need to assume the response contains the payment URL
     // Redirect to the waiting page and let the polling mechanism check for the URL
     res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
   } catch (error) {
+    console.error(`Error while calling Zapier webhook for contactId ${contactId}:`, error);
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
+
 
 
 
