@@ -45,18 +45,55 @@ app.get('/create-payment', async (req, res) => {
   }
 });
 
+// Endpoint to check if the payment URL is available
+app.get('/check-payment-url', (req, res) => {
+  const contactId = req.query.contact_id;
+  
+  // Retrieve the payment URL using the contact ID
+  const paymentUrl = paymentUrls[contactId];
+  
+  if (paymentUrl) {
+    res.json({ available: true, paymentUrl: paymentUrl });
+  } else {
+    res.json({ available: false });
+  }
+});
+
 // Endpoint to redirect user to the actual payment URL
 app.get('/redirect-to-payment', (req, res) => {
   const contactId = req.query.contact_id;
   
-  const paymentUrl = paymentUrls[contactId];
-  
-  if (paymentUrl) {
-    delete paymentUrls[contactId];
-    res.send(`<html><head><meta http-equiv="refresh" content="0;url=${paymentUrl}"></head></html>`);
-  } else {
-    res.status(404).send('Payment URL not found.');
-  }
+  // Serve a page that polls for the payment URL
+  res.send(`
+    <html>
+    <head>
+      <title>Waiting for Payment...</title>
+      <script>
+        function checkPaymentUrl(contactId) {
+          fetch(\`/check-payment-url?contact_id=\${contactId}\`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.available) {
+                window.location.href = data.paymentUrl;
+              } else {
+                // Not available yet, check again in a few seconds
+                setTimeout(() => checkPaymentUrl(contactId), 3000);
+              }
+            })
+            .catch(error => {
+              console.error('Error checking payment URL:', error);
+            });
+        }
+        // Start polling for the payment URL
+        checkPaymentUrl('${contactId}');
+      </script>
+    </head>
+    <body>
+      <h1>Payment Processing...</h1>
+      <p>Please wait, you will be redirected shortly.</p>
+    </body>
+    </html>
+  `);
 });
 
 app.listen(port, () => {
