@@ -2,10 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Payment Processing</title>
+    <title>Welcome to Our Payment Service</title>
 </head>
 <body>
-    <h1>Payment Processing...</h1>
-    <p>Please wait, you will be redirected shortly.</p>
+    <h1>Welcome to Our Payment Service</h1>
+    <p>Please enter your Contact ID and press "Pay Now" to proceed with the payment.</p>
+
+    <input type="text" id="contactIdInput" placeholder="Enter Contact ID" />
+    <button onclick="startPaymentProcess()">Pay Now</button>
+    
+    <script>
+    function startPaymentProcess() {
+        var contactId = document.getElementById('contactIdInput').value;
+        if (contactId) {
+            window.location.href = `/create-payment?contact_id=${contactId}`;
+        } else {
+            alert('Please enter a valid Contact ID.');
+        }
+    }
+    </script>
 </body>
 </html>
