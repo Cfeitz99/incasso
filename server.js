@@ -41,6 +41,13 @@ app.get('/create-payment', async (req, res) => {
   }
 });
 
+// Add this to your server.js file
+app.post('/receive-payment-url', express.json(), (req, res) => {
+  console.log('Received payment URL:', req.body.paymentUrl);
+  // Here you would handle the payment URL
+  // For now, we're just logging it
+  res.status(200).json({ success: true });
+});
 
 // Start the server on the specified port
 app.listen(port, () => {
