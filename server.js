@@ -57,12 +57,17 @@ app.get('/check-payment-url', (req, res) => {
   // Retrieve the payment URL using the contact ID
   const paymentUrl = paymentUrls[contactId];
   
+  console.log(`Checking payment URL for contactId ${contactId}: `, paymentUrl);
+  
   if (paymentUrl) {
+    console.log(`Sending available payment URL for contactId ${contactId}`);
     res.json({ available: true, paymentUrl: paymentUrl });
   } else {
+    console.log(`No payment URL available for contactId ${contactId}`);
     res.json({ available: false });
   }
 });
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
