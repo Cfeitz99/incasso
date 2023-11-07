@@ -10,14 +10,22 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ... (the rest of your server setup)
+
 // Endpoint to create payment and redirect user
 app.get('/create-payment', async (req, res) => {
-  try {
-    // Insert the actual Zapier webhook URL here
-    const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/16510018/38cygnn/';
+  const contactId = req.query.contact_id; // Extract contact_id from the query parameters
 
-    // Make a POST request to the Zapier webhook
-    const zapierResponse = await axios.post(zapierWebhookUrl, {});
+  try {
+    if (!contactId) {
+      throw new Error('No contact ID provided');
+    }
+
+    // Insert the actual Zapier webhook URL here
+    const zapierWebhookUrl = 'YOUR_ZAPIER_WEBHOOK_URL';
+
+    // Make a POST request to the Zapier webhook with the contact ID
+    const zapierResponse = await axios.post(zapierWebhookUrl, { contactId });
 
     // Zapier should respond with the payment URL in the response body
     if (zapierResponse.data && zapierResponse.data.paymentUrl) {
@@ -32,6 +40,7 @@ app.get('/create-payment', async (req, res) => {
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
+
 
 // Start the server on the specified port
 app.listen(port, () => {
