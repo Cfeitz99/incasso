@@ -72,12 +72,10 @@
   <h1>Waiting for Payment<span class="dots"><span>.</span><span>.</span><span>.</span></span></h1>
   <p>Please wait, you will be redirected to the payment page shortly.</p>
   <p class="accent">Do not close this window.</p>
-  <script>
+ <script>
     // Function to start the payment process
     function startPaymentProcess(contactId) {
-      if (contactId) {
-        window.location.href = `/create-payment?contact_id=${contactId}`;
-      }
+      window.location.href = `/create-payment?contact_id=${contactId}`;
     }
 
     // Polling function to check if the payment URL is ready
@@ -95,17 +93,21 @@
         .catch(error => console.error('Error checking payment URL:', error));
     }
 
-    // When the document is ready
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const contactId = urlParams.get('contact_id');
+      const paymentInitiated = urlParams.get('payment_initiated');
 
-      // Start the payment process immediately if there's a contact ID
-      if (contactId) {
+      // Start the payment process only if there's a contact ID and the payment hasn't been initiated
+      if (contactId && !paymentInitiated) {
         startPaymentProcess(contactId);
       } else {
-        // If no contact ID, you can handle accordingly or do nothing
-        console.log('No contact ID provided.');
+        // Start polling if payment has been initiated
+        if (paymentInitiated) {
+          checkPaymentUrl(contactId);
+        } else {
+          console.log('No contact ID provided or payment already initiated.');
+        }
       }
     });
   </script>
