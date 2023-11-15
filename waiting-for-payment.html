@@ -72,8 +72,15 @@
   <h1>Waiting for Payment<span class="dots"><span>.</span><span>.</span><span>.</span></span></h1>
   <p>Please wait, you will be redirected to the payment page shortly.</p>
   <p class="accent">Do not close this window.</p>
-
   <script>
+
+    // New function to start payment process
+    function startPaymentProcess(contactId) {
+      if (contactId) {
+        window.location.href = `/create-payment?contact_id=${contactId}`;
+      }
+    }
+    
     // Polling function to check if the payment URL is ready
     function checkPaymentUrl(contactId) {
       fetch(`/check-payment-url?contact_id=${contactId}`)
