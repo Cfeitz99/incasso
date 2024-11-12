@@ -81,15 +81,15 @@ app.get('/create-payment', async (req, res) => {
       paymentUrls[id] = checkoutUrl;
       console.log(`Payment URL stored for ID ${id}: ${checkoutUrl}`);
 
-      // Redirect the user to the Mollie payment URL
-      return res.redirect(checkoutUrl);
+      // Return a JSON response instead of redirecting
+      return res.json({ success: true });
     } else {
       console.error('Error generating Mollie payment URL:', response.data.error);
-      return res.status(500).send('Error generating payment URL');
+      return res.status(500).json({ success: false, error: 'Error generating payment URL' });
     }
   } catch (error) {
     console.error('Error in /create-payment:', error.message);
-    return res.status(500).send(`Error creating payment: ${error.message}`);
+    return res.status(500).json({ success: false, error: `Error creating payment: ${error.message}` });
   }
 });
 
