@@ -74,7 +74,12 @@ app.get('/create-payment', async (req, res) => {
     if (response.data.success && response.data.checkout_link) {
       const checkoutUrl = response.data.checkout_link;
       console.log(`Successfully generated Mollie payment URL: ${checkoutUrl}`);
-      
+
+      // Store the payment URL in the paymentUrls object using contactId or companyId as the key
+      const id = contactId || companyId;
+      paymentUrls[id] = checkoutUrl;
+      console.log(`Payment URL stored for ID ${id}: ${checkoutUrl}`);
+
       // Redirect the user to the Mollie payment URL
       return res.redirect(checkoutUrl);
     } else {
@@ -85,41 +90,4 @@ app.get('/create-payment', async (req, res) => {
     console.error('Error in /create-payment:', error.message);
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
-});
-
-// Endpoint to receive the payment URL from Zapier
-app.post('/receive-payment-url', express.json(), (req, res) => {
-  const { paymentUrl, contactId } = req.body;
-  console.log(`Received payment URL for contactId ${contactId}: ${paymentUrl}`);
-
-  if (!contactId || !paymentUrl) {
-    console.error('Invalid data received for payment URL');
-    return res.status(400).json({ success: false, message: 'Invalid data received' });
-  }
-
-  // Store the payment URL using the contact ID as a key
-  paymentUrls[contactId] = paymentUrl;
-  console.log(`Payment URL stored for contactId ${contactId}`);
-  res.status(200).json({ success: true });
-});
-
-// Endpoint to check if payment URL is ready
-app.get('/check-payment-url', (req, res) => {
-  const contactId = req.query.contact_id;
-  const companyId = req.query.company_id;
-  const id = contactId || companyId;
-  console.log(`Checking payment URL for ID ${id}:`, paymentUrls[id]);
-
-  const paymentUrl = paymentUrls[id];
-  if (paymentUrl) {
-    console.log(`Payment URL available for ID ${id}`);
-    res.json({ available: true, paymentUrl });
-  } else {
-    console.log(`No payment URL available for ID ${id}`);
-    res.json({ available: false });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
 });
