@@ -73,18 +73,18 @@
   <p>Please wait, you will be redirected to the payment page shortly.</p>
   <p class="accent">Do not close this window.</p>
   <script>
-    function startPaymentProcess(idParam) {
-      fetch(`/create-payment?${idParam}`, { method: 'GET' })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.text();
-        })
-        .then(data => {
-          console.log('Payment process started:', data);
-        })
-        .catch(error => console.error('Error starting payment process:', error));
+    async function startPaymentProcess(idParam) {
+      try {
+        const response = await fetch(`/create-payment?${idParam}`, { method: 'GET' });
+        if (!response.ok) {
+          throw new Error('Failed to start payment process');
+        }
+        console.log('Payment process started successfully');
+        return true;
+      } catch (error) {
+        console.error('Error starting payment process:', error);
+        return false;
+      }
     }
 
     function checkPaymentUrl(idParam) {
@@ -95,13 +95,13 @@
           if (data.available) {
             window.location.href = data.paymentUrl;
           } else {
-            setTimeout(() => checkPaymentUrl(idParam), 3000);
+            setTimeout(() => checkPaymentUrl(idParam), 3000); // Poll every 3 seconds
           }
         })
         .catch(error => console.error('Error checking payment URL:', error));
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const contactId = urlParams.get('contact_id');
       const companyId = urlParams.get('company_id');
@@ -110,8 +110,11 @@
       const idParam = contactId ? `contact_id=${contactId}` : `company_id=${companyId}`;
       
       if (contactId || companyId) {
-        startPaymentProcess(idParam);
-        checkPaymentUrl(idParam);
+        const paymentStarted = await startPaymentProcess(idParam);
+        if (paymentStarted) {
+          // Only start polling if the payment process was successfully started
+          setTimeout(() => checkPaymentUrl(idParam), 3000);
+        }
       } else {
         console.log('No valid Contact ID or Company ID provided.');
       }
