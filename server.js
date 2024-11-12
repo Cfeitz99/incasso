@@ -11,8 +11,6 @@ const oauthPassword = process.env.OAUTH_PASSWORD;
 const tokenUrl = process.env.TOKEN_URL;
 const fastApiBaseUrl = 'https://sunny-picture-production.up.railway.app';
 
-let paymentUrls = {};
-
 // Function to get an OAuth token
 async function getAccessToken() {
   const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -65,51 +63,35 @@ app.get('/create-payment', async (req, res) => {
 
     console.log(`Making request to FastAPI URL: ${fastApiUrl}`);
 
-    // Call the FastAPI service to generate the Mollie payment URL
+    // Make the request without following redirects
     const response = await axios.get(fastApiUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      maxRedirects: 0, // Do not follow redirects automatically
+      validateStatus: function (status) {
+        return status >= 200 && status < 400; // Accept status codes from 200 to 399
+      },
     });
 
-    if (response.data.success && response.data.checkout_link) {
-      const checkoutUrl = response.data.checkout_link;
-      console.log(`Successfully generated Mollie payment URL: ${checkoutUrl}`);
+    if (response.status === 302 || response.status === 307) {
+      const checkoutUrl = response.headers.location;
+      console.log(`Received redirect to Mollie payment URL: ${checkoutUrl}`);
 
-      const id = contactId || companyId;
-      paymentUrls[id] = checkoutUrl;
-      console.log(`Payment URL stored for ID ${id}: ${checkoutUrl}`);
-
-      // Return a JSON response instead of redirecting
-      return res.json({ success: true });
+      // Redirect the user to the Mollie payment URL
+      return res.redirect(checkoutUrl);
     } else {
-      console.error('Error generating Mollie payment URL:', response.data.error);
-      return res.status(500).json({ success: false, error: 'Error generating payment URL' });
+      console.error('Unexpected response from FastAPI service:', response.status);
+      return res.status(500).send('Error generating payment URL');
     }
   } catch (error) {
     console.error('Error in /create-payment:', error.message);
-    return res.status(500).json({ success: false, error: `Error creating payment: ${error.message}` });
+    return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
 
-// Endpoint to check if payment URL is ready
-app.get('/check-payment-url', (req, res) => {
-  const contactId = req.query.contact_id;
-  const companyId = req.query.company_id;
-  const id = contactId || companyId;
-
-  console.log(`Checking payment URL for ID: ${id}`);
-  const paymentUrl = paymentUrls[id];
-  console.log(`Stored payment URL for ID ${id}: ${paymentUrl}`);
-
-  if (paymentUrl) {
-    res.json({ available: true, paymentUrl });
-  } else {
-    res.json({ available: false });
-  }
-});
-
+// Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
