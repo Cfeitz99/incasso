@@ -36,46 +36,50 @@ app.post('/receive-payment-url', express.json(), (req, res) => {
 });
 
 
-// Endpoint to create payment and initiate the process
 app.get('/create-payment', async (req, res) => {
   const contactId = req.query.contact_id;
+  const companyId = req.query.company_id;
 
   try {
-    if (!contactId) {
-      throw new Error('No contact ID provided');
+    // Validate that either contactId or companyId is provided
+    if (!contactId && !companyId) {
+      throw new Error('No contact ID or company ID provided');
     }
 
     const zapierWebhookUrl = 'https://hooks.zapier.com/hooks/catch/16510018/38cygnn/';
+    
+    // Choose which ID to send to Zapier
+    const payload = contactId ? { contactId } : { companyId };
+    
+    // Make a POST request to the Zapier webhook
+    await axios.post(zapierWebhookUrl, payload);
 
-    // Make a POST request to the Zapier webhook with the contact ID
-    await axios.post(zapierWebhookUrl, { contactId });
-
-    // Redirect to a waiting page that will handle the actual redirection to the payment URL
-    res.redirect(`/waiting-for-payment?contact_id=${contactId}`);
+    // Redirect to the waiting page with the appropriate query parameter
+    const idParam = contactId ? `contact_id=${contactId}` : `company_id=${companyId}`;
+    res.redirect(`/waiting-for-payment?${idParam}`);
   } catch (error) {
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
 });
 
-
-
-
 app.get('/check-payment-url', (req, res) => {
   const contactId = req.query.contact_id;
-  console.log(`Checking payment URL for contactId ${contactId}:`, paymentUrls[contactId]);
-  
-  const paymentUrl = paymentUrls[contactId];
-  
+  const companyId = req.query.company_id;
+
+  // Use contactId or companyId to fetch the payment URL
+  const id = contactId || companyId;
+  console.log(`Checking payment URL for ID ${id}:`, paymentUrls[id]);
+
+  const paymentUrl = paymentUrls[id];
+
   if (paymentUrl) {
-    console.log(`Payment URL available for contactId ${contactId}`);
+    console.log(`Payment URL available for ID ${id}`);
     res.json({ available: true, paymentUrl: paymentUrl });
   } else {
-    console.log(`No payment URL available for contactId ${contactId}`);
+    console.log(`No payment URL available for ID ${id}`);
     res.json({ available: false });
   }
 });
-
-
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
