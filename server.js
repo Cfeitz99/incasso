@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000;
 // Get environment variables from Railway
 const oauthUsername = process.env.OAUTH_USERNAME;
 const oauthPassword = process.env.OAUTH_PASSWORD;
-const tokenUrl = process.env.TOKEN_URL; // This should be 'https://sunny-picture-production.up.railway.app/klippa/token'
+const tokenUrl = process.env.TOKEN_URL;
 const fastApiBaseUrl = 'https://sunny-picture-production.up.railway.app';
 
 let paymentUrls = {};
@@ -48,10 +48,11 @@ app.get('/create-payment', async (req, res) => {
   const companyId = req.query.company_id;
 
   try {
-    // Validate that either contactId or companyId is provided
     if (!contactId && !companyId) {
       throw new Error('No contact ID or company ID provided');
     }
+
+    console.log(`Received request with contact_id: ${contactId}, company_id: ${companyId}`);
 
     // Get the access token
     const accessToken = await getAccessToken();
@@ -59,23 +60,23 @@ app.get('/create-payment', async (req, res) => {
       return res.status(500).send('Failed to authenticate with FastAPI service');
     }
 
-    // Prepare the query parameter for the FastAPI request
     const idParam = contactId ? `contact_id=${contactId}` : `company_id=${companyId}`;
     const fastApiUrl = `${fastApiBaseUrl}/mollie/generate-payment-url?${idParam}`;
+
+    console.log(`Making request to FastAPI URL: ${fastApiUrl}`);
 
     // Call the FastAPI service to generate the Mollie payment URL
     const response = await axios.get(fastApiUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
     if (response.data.success && response.data.checkout_link) {
       const checkoutUrl = response.data.checkout_link;
       console.log(`Successfully generated Mollie payment URL: ${checkoutUrl}`);
 
-      // Store the payment URL in the paymentUrls object using contactId or companyId as the key
       const id = contactId || companyId;
       paymentUrls[id] = checkoutUrl;
       console.log(`Payment URL stored for ID ${id}: ${checkoutUrl}`);
@@ -90,4 +91,25 @@ app.get('/create-payment', async (req, res) => {
     console.error('Error in /create-payment:', error.message);
     return res.status(500).send(`Error creating payment: ${error.message}`);
   }
+});
+
+// Endpoint to check if payment URL is ready
+app.get('/check-payment-url', (req, res) => {
+  const contactId = req.query.contact_id;
+  const companyId = req.query.company_id;
+  const id = contactId || companyId;
+
+  console.log(`Checking payment URL for ID: ${id}`);
+  const paymentUrl = paymentUrls[id];
+  console.log(`Stored payment URL for ID ${id}: ${paymentUrl}`);
+
+  if (paymentUrl) {
+    res.json({ available: true, paymentUrl });
+  } else {
+    res.json({ available: false });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
