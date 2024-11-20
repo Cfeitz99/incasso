@@ -59,7 +59,7 @@ app.get('/create-payment', async (req, res) => {
     }
 
     const idParam = contactId ? `contact_id=${contactId}` : `company_id=${companyId}`;
-    const fastApiUrl = `${fastApiBaseUrl}/mollie/generate-payment-url?${idParam}`;
+    const fastApiUrl = `${fastApiBaseUrl}/mollie/generate/url/incasso?${idParam}`;
 
     console.log(`Making request to FastAPI URL: ${fastApiUrl}`);
 
