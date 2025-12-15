@@ -40,7 +40,7 @@ app.get('/waiting-for-payment', (req, res) => {
   res.sendFile(path.join(__dirname, 'waiting-for-payment.html'));
 });
 
-// Endpoint to create a Mollie payment (now uses mc_id)
+// Endpoint to create a Mollie payment (public param is mc_id)
 app.get('/create-payment', async (req, res) => {
   const mcId = req.query.mc_id;
 
@@ -57,7 +57,9 @@ app.get('/create-payment', async (req, res) => {
       return res.status(500).send('Failed to authenticate with FastAPI service');
     }
 
-    const fastApiUrl = `${fastApiBaseUrl}/mollie/generate/url/incasso?mc_id=${mcId}`;
+    // IMPORTANT: FastAPI expects mollie_customer_id, but we keep mc_id externally
+    const fastApiUrl =
+      `${fastApiBaseUrl}/mollie/generate/url/incasso?mollie_customer_id=${encodeURIComponent(mcId)}`;
 
     console.log(`Making request to FastAPI URL: ${fastApiUrl}`);
 
@@ -67,9 +69,9 @@ app.get('/create-payment', async (req, res) => {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      maxRedirects: 0, // Do not follow redirects automatically
+      maxRedirects: 0,
       validateStatus: function (status) {
-        return status >= 200 && status < 400; // Accept status codes from 200 to 399
+        return status >= 200 && status < 400;
       },
     });
 
@@ -80,7 +82,7 @@ app.get('/create-payment', async (req, res) => {
       // Redirect the user to the Mollie payment URL
       return res.redirect(checkoutUrl);
     } else {
-      console.error('Unexpected response from FastAPI service:', response.status);
+      console.error('Unexpected response from FastAPI service:', response.status, response.data);
       return res.status(500).send('Error generating payment URL');
     }
   } catch (error) {
