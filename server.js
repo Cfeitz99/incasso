@@ -40,17 +40,16 @@ app.get('/waiting-for-payment', (req, res) => {
   res.sendFile(path.join(__dirname, 'waiting-for-payment.html'));
 });
 
-// Endpoint to create a Mollie payment
+// Endpoint to create a Mollie payment (now uses mc_id)
 app.get('/create-payment', async (req, res) => {
-  const contactId = req.query.contact_id;
-  const companyId = req.query.company_id;
+  const mcId = req.query.mc_id;
 
   try {
-    if (!contactId && !companyId) {
-      throw new Error('No contact ID or company ID provided');
+    if (!mcId) {
+      throw new Error('No mc_id provided');
     }
 
-    console.log(`Received request with contact_id: ${contactId}, company_id: ${companyId}`);
+    console.log(`Received request with mc_id: ${mcId}`);
 
     // Get the access token
     const accessToken = await getAccessToken();
@@ -58,8 +57,7 @@ app.get('/create-payment', async (req, res) => {
       return res.status(500).send('Failed to authenticate with FastAPI service');
     }
 
-    const idParam = contactId ? `contact_id=${contactId}` : `company_id=${companyId}`;
-    const fastApiUrl = `${fastApiBaseUrl}/mollie/generate/url/incasso?${idParam}`;
+    const fastApiUrl = `${fastApiBaseUrl}/mollie/generate/url/incasso?mc_id=${mcId}`;
 
     console.log(`Making request to FastAPI URL: ${fastApiUrl}`);
 
