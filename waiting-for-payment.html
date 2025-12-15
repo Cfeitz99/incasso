@@ -223,18 +223,14 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const contactId = urlParams.get('contact_id');
-      const companyId = urlParams.get('company_id');
+      const mcId = urlParams.get('mc_id');
 
-      // Determine which ID to use
-      const idParam = contactId ? `contact_id=${contactId}` : `company_id=${companyId}`;
-
-      if (contactId || companyId) {
-        // Redirect the browser to /create-payment directly
-        window.location.href = `/create-payment?${idParam}`;
+      if (mcId) {
+        // Redirect the browser to /create-payment using mc_id
+        window.location.href = `/create-payment?mc_id=${encodeURIComponent(mcId)}`;
       } else {
-        console.error('No valid Contact ID or Company ID provided.');
-        alert('Invalid request. Please provide a valid Contact ID or Company ID.');
+        console.error('No valid mc_id provided.');
+        alert('Invalid request. Please provide a valid mc_id.');
       }
     });
   </script>
